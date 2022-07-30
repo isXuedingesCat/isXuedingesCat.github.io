@@ -1,0 +1,625 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="薛定谔的猫">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="使用c++语言，在不使用库函数的情况下，实现根号运算操作 方式一 梯度下降法 将求解根号的问题转化为求解函数值解的问题，$\sqrt{x}$ 转化为 $L(t) &#x3D; (t^2-x)^2$ 当 $L(t) &#x3D; 0$ 时，$t$ 就是 $\sqrt{x}$ 的结果 寻找$t$合适的解，使 $L(t) &#x3D; (t^2-x)^2 &#x3D; 0$ 找的 $t$ 的解即为需要的结果  此时问题转化为求解 $L(t)$">
+<meta property="og:type" content="article">
+<meta property="og:title" content="c++手动实现求解根号">
+<meta property="og:url" content="http://example.com/2022/07/27/cpp%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7/index.html">
+<meta property="og:site_name" content="浮生小记">
+<meta property="og:description" content="使用c++语言，在不使用库函数的情况下，实现根号运算操作 方式一 梯度下降法 将求解根号的问题转化为求解函数值解的问题，$\sqrt{x}$ 转化为 $L(t) &#x3D; (t^2-x)^2$ 当 $L(t) &#x3D; 0$ 时，$t$ 就是 $\sqrt{x}$ 的结果 寻找$t$合适的解，使 $L(t) &#x3D; (t^2-x)^2 &#x3D; 0$ 找的 $t$ 的解即为需要的结果  此时问题转化为求解 $L(t)$">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/07/27/cpp%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7/%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7%E5%9B%BE%E4%B8%80.png">
+<meta property="og:image" content="http://example.com/2022/07/27/cpp%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7/%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7%E5%9B%BE%E4%BA%8C.png">
+<meta property="article:published_time" content="2022-07-27T15:00:18.000Z">
+<meta property="article:modified_time" content="2022-07-30T05:03:19.685Z">
+<meta property="article:author" content="薛定谔的猫">
+<meta property="article:tag" content="c++">
+<meta property="article:tag" content="algorithm">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/07/27/cpp%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7/%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7%E5%9B%BE%E4%B8%80.png">
+  
+  
+  
+  <title>c++手动实现求解根号 - 浮生小记</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.2","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生小记</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/blackholl.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="c++手动实现求解根号"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-07-27 23:00" pubdate>
+          2022年7月27日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">c++手动实现求解根号</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><strong>使用c++语言，在不使用库函数的情况下，实现根号运算操作</strong></p>
+<h2 id="方式一-梯度下降法"><a href="#方式一-梯度下降法" class="headerlink" title="方式一 梯度下降法"></a>方式一 梯度下降法</h2><ol>
+<li>将求解根号的问题转化为求解函数值解的问题，$\sqrt{x}$ 转化为 $L(t) = (t^2-x)^2$ 当 $L(t) = 0$ 时，$t$ 就是 $\sqrt{x}$ 的结果</li>
+<li>寻找$t$合适的解，使 $L(t) = (t^2-x)^2 = 0$</li>
+<li>找的 $t$ 的解即为需要的结果</li>
+</ol>
+<p><em>此时问题转化为求解 $L(t)$ 的极小值，也就是导数为0的点$</em></p>
+<p><img src="/2022/07/27/cpp%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7/%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7%E5%9B%BE%E4%B8%80.png" srcset="/img/loading.gif" lazyload alt="图一"></p>
+<p>如果橙黄色曲线为 $L(t)$ 函数曲线，当 $t$ 出于与红色位置时，我们需要重新调整 $t$ 的位置，使得 $L(t)$ 的值接近0，此时的问题是将 $t$ 向左调整还是向右调整。</p>
+<p>假设我们在x轴上的调整量为 $\Delta t$($\Delta t$为无穷小量), 此时可以比较将t向左与向右调整 $\Delta t$ 后 ,函数 $L(t\pm \Delta t)$ 的值与 ${L(t)}$ 值的关系。</p>
+<p>如果 $L(t-\Delta t) &lt; L(t)$ 则 $t1 = t - \Delta t$</p>
+<p>如果 $L(t+\Delta t) &lt; L(t)$ 则$t1 = t + \Delta t$</p>
+<p>等价于</p>
+<p>若 $L(t+\Delta t) - L(t) &lt; 0$则<br>$t1 = t + \Delta t$</p>
+<p>若 $L(t-\Delta t) - L(t) &lt; 0$则<br>$t1 = t - \Delta t$</p>
+<p>上两式可以合并为 $t1 = t - \frac{L(t+\Delta t)-L(t)}{\left| L(t+\Delta t) - L(t) \right|}\Delta t$ 其中 $\frac{L(t+\Delta t)-L(t)}{\left| L(t+\Delta t) - L(t) \right|}$ 的作用为取符号。<br>又可做如下的转换 $t1 = t - \frac{\frac{L(t+\Delta t) - L(t)}{\Delta t}}{\left| \frac{L(t+\Delta t) - L(t)}{\Delta t} \right|}\Delta t =t - \frac{L(t+\Delta t) - L(t)}{\Delta t}*\frac{\Delta t}{\left| \frac{L(t+\Delta t) - L(t)}{\Delta t} \right|}$ 其中 $\frac{L(t+\Delta t) - L(t)}{\Delta t}$ 为函数L在t点的导数，$\frac{\Delta t}{\left| \frac{L(t+\Delta t) - L(t)}{\Delta t} \right|}$由于导数为常数，该部分可以视作无穷小。</p>
+<p>此时上式可以化简为 $t1 = t - \alpha*\frac{L(t+\Delta t) - L(t)}{\Delta t} (\alpha \longrightarrow 0^+)$</p>
+<p>这里只有当 $\alpha \longrightarrow 0^+$ 时，该行为才能够成立， $\alpha$也被视为步长。</p>
+<p>当$\alpha$取无穷小时，虽然一定保证下降，但效率太慢，当设置较大值时，可能会暂时越过合适位置，但依然能够通过迭代重新回到合适位置附近，我们将$\alpha$称为学习率。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-keyword">using</span> <span class="hljs-keyword">namespace</span> std;<br><br><span class="hljs-keyword">namespace</span> SQRT<br>&#123;<br>  <span class="hljs-comment">/**</span><br><span class="hljs-comment">   * @name: 使用导数求解根号</span><br><span class="hljs-comment">   * @msg: </span><br><span class="hljs-comment">   * @param &#123;double&#125; x 输入待求解的数值</span><br><span class="hljs-comment">   * @param &#123;double&#125; alpha 每一步更新的学习率</span><br><span class="hljs-comment">   * @param &#123;double&#125; precision 精度</span><br><span class="hljs-comment">   * @return &#123;*&#125; 返回求解得到的结果</span><br><span class="hljs-comment">   */</span><br>  <span class="hljs-function"><span class="hljs-type">double</span> <span class="hljs-title">sqrt1</span><span class="hljs-params">(<span class="hljs-type">double</span> x,<span class="hljs-type">double</span> alpha,<span class="hljs-type">double</span> precision = <span class="hljs-number">1e-8</span>)</span></span><br><span class="hljs-function">  </span>&#123;<br>    <span class="hljs-type">double</span> t = x/<span class="hljs-number">2.</span>;<br>    <span class="hljs-type">double</span> L = (t*t - x)*(t*t -x);<br>    <span class="hljs-type">double</span> d = <span class="hljs-number">0.</span>;<br>    <span class="hljs-keyword">while</span> (L &gt; precision)<br>    &#123;<br>      d = <span class="hljs-number">2</span>*(t*t -x)*<span class="hljs-number">2</span>*t;<br>      t = t - alpha*d;<br>      L = (t*t - x)*(t*t -x);<br>    &#125;<br>    <span class="hljs-keyword">return</span> t;<br>  &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br><br>  cout&lt;&lt;SQRT::<span class="hljs-built_in">sqrt1</span>(<span class="hljs-number">2</span>,<span class="hljs-number">0.001</span>,<span class="hljs-number">1e-8</span>)&lt;&lt;endl;<br><br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br>\*<br>输出：<span class="hljs-number">1.41418</span><br>*\<br></code></pre></td></tr></table></figure>
+<p><strong>方式一总结</strong></p>
+<ol>
+<li>梯度下降法是通过局部决定如何调整的算法，如果函数有多个极值，则可能陷入局部极值，因此初始值的选择直接影响收敛结果。</li>
+<li>大的步长一定程度上能跨过局部极值，但也可能由于震荡导致不收敛</li>
+<li>存在有一类算法，可以在一定范围内搜索一个合适步长，使每一次迭代更加稳定</li>
+</ol>
+<h2 id="方式二-牛顿法一"><a href="#方式二-牛顿法一" class="headerlink" title="方式二 牛顿法一"></a>方式二 牛顿法一</h2><p>梯度下降法多用于求解函数极小值的情况，而牛顿法则多用在求解 <strong>函数零点</strong> 时方程的根。</p>
+<p>重新构造函数，将 $\sqrt{x}$ 转化为 $L(t) = t^2 - x$ 当 $L(t) = 0$时，t 就是需要的结果。</p>
+<p><img src="/2022/07/27/cpp%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7/%E6%B1%82%E8%A7%A3%E6%A0%B9%E5%8F%B7%E5%9B%BE%E4%BA%8C.png" srcset="/img/loading.gif" lazyload alt="图二"></p>
+<p>在 o2 点建立坐标系，此时对于 $f(x)$ 在 $x1$ 处切线可以表示为 $f_o2(x2) = k(x2-x1)+b = f^`(x1)(x2-x1) = -f(x1)$ 最后一个等式可以通过 $o2$ 坐标系看出,在 $o2$ 坐标戏中，切线在 $x = x2$ 时 $y$ 值与 $-f(x1)$ 值相等。</p>
+<p>将上式进行变换得到 </p>
+<p>$x2 -x1 = -\frac{f(x1)}{f^`(x1)}$ </p>
+<p>$x2 = x1 - \frac{f(x1)}{f^`(x1)}$</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * @name: 牛顿法1求解根号</span><br><span class="hljs-comment"> * @msg: </span><br><span class="hljs-comment"> * @param &#123;double&#125; x 要求解的根号数值</span><br><span class="hljs-comment"> * @param &#123;double&#125; precision 精度要求</span><br><span class="hljs-comment"> * @return &#123;*&#125; 返回结果值</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function"><span class="hljs-type">double</span> <span class="hljs-title">sqrt2</span><span class="hljs-params">(<span class="hljs-type">double</span> x,<span class="hljs-type">double</span> precision=<span class="hljs-number">1e-8</span>)</span></span><br><span class="hljs-function"></span>&#123;<br>  <span class="hljs-type">double</span> x1 = x/<span class="hljs-number">2.</span>;<br>  <span class="hljs-type">double</span> L = (x1*x1 - x);<br>  <span class="hljs-type">double</span> d = <span class="hljs-number">0.</span>;<br>  <span class="hljs-keyword">while</span>(<span class="hljs-built_in">abs</span>(L)&gt;precision)  <span class="hljs-comment">// 注意 abs 函数，可以从零点两侧逼近</span><br>  &#123;<br>    d = <span class="hljs-number">2</span>*x1;<br>    x1 = x1 - L/d;<br>    L = (x1*x1 - x);<br>  &#125;<br>  <span class="hljs-keyword">return</span> x1;<br>&#125;<br><span class="hljs-comment">// 输出 ： 1.41421</span><br></code></pre></td></tr></table></figure>
+<h2 id="方式三-牛顿法2"><a href="#方式三-牛顿法2" class="headerlink" title="方式三 牛顿法2"></a>方式三 牛顿法2</h2><p>将原本牛顿法1中对 $L(x)$ 函数的定义转变为 $L(x) = f^<code>(x)$ 即原来 $L(s)$ 表示的是原函数的图像，现在表示的是导函数的图像。根据牛顿法1的结论 $t2 = t1 - \frac&#123;L(t)&#125;&#123;L^</code>(t)}$ 可以得到 $t2 = t1 - \frac{f^`(t)}{f^``(t)}$</p>
+<p>此时将函数L定义为 $L(t) = (t^2 -x)^2 = 0$</p>
+<p>以上要求 $f(x)$ 至少是二阶可导的。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs cpp">  <span class="hljs-function"><span class="hljs-type">double</span> <span class="hljs-title">sqrt3</span><span class="hljs-params">(<span class="hljs-type">double</span> x,<span class="hljs-type">double</span> precision=<span class="hljs-number">1e-8</span>)</span></span><br><span class="hljs-function">  </span>&#123;<br>    <span class="hljs-type">double</span> t = x/<span class="hljs-number">2.</span>;<br>    <span class="hljs-type">double</span> L = (t*t-x)*(t*t-x);<br>    <span class="hljs-type">double</span> d1 =<span class="hljs-number">0.</span>,d2=<span class="hljs-number">0.</span>;<br>    <span class="hljs-keyword">while</span>(L&gt;precision)<br>    &#123;<br>      d1 = <span class="hljs-number">2</span>*(t*t-x)*<span class="hljs-number">2</span>*t;<br>      d2 = <span class="hljs-number">12</span>*t*t - <span class="hljs-number">4</span>*x*t;<br>      t = t - d1/d2;<br>      L = (t*t -x)*(t*t-x);<br>    &#125;<br>    <span class="hljs-keyword">return</span> t;<br>  &#125;<br><span class="hljs-comment">// 输出 ：1.41423 </span><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/c/" class="category-chain-item">c++</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/c/">#c++</a>
+      
+        <a href="/tags/algorithm/">#algorithm</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/07/27/c++11%E8%AE%A1%E6%97%B6%E5%B7%A5%E5%85%B7/" title="c++11 计时工具">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">c++11 计时工具</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      headingSelector : CONFIG.toc.headingSelector || 'h1,h2,h3,h4,h5,h6',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      collapseDepth   : CONFIG.toc.collapseDepth || 0,
+      scrollSmooth    : true,
+      headingsOffset  : -boardTop
+    });
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.10/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.1/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
