@@ -1,0 +1,617 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="薛定谔的猫">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="DBNetDBNet适用于文本字符区域定位的算法，是通过对输入图片的文本前景分割，然后进行后处理得到的文本区域定位框的模型，不同于基于检测的文本字符区域定位那种基于检测算法，基于分割的定位算法在后处理上有更大的难度。 论文官方代码 图一中蓝色线展示的是一般的字符区域定位流程图。首先通过分割网络模型得到概率图，再通过设定的阈值将概率图转换为二值图然后使用一些启发式的规则，如像素聚合等将文本像素聚合到">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DBNet">
+<meta property="og:url" content="http://example.com/2022/08/19/DBNet/index.html">
+<meta property="og:site_name" content="浮生小记">
+<meta property="og:description" content="DBNetDBNet适用于文本字符区域定位的算法，是通过对输入图片的文本前景分割，然后进行后处理得到的文本区域定位框的模型，不同于基于检测的文本字符区域定位那种基于检测算法，基于分割的定位算法在后处理上有更大的难度。 论文官方代码 图一中蓝色线展示的是一般的字符区域定位流程图。首先通过分割网络模型得到概率图，再通过设定的阈值将概率图转换为二值图然后使用一些启发式的规则，如像素聚合等将文本像素聚合到">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/08/19/DBNet/图一.png">
+<meta property="og:image" content="http://example.com/2022/08/19/DBNet/%E5%9B%BE%E4%BA%8C.png">
+<meta property="og:image" content="http://example.com/2022/08/19/DBNet/%E5%9B%BE%E4%B8%89.png">
+<meta property="og:image" content="http://example.com/2022/08/19/DBNet/%E5%9B%BE%E5%9B%9B.png">
+<meta property="og:image" content="http://example.com/2022/08/19/DBNet/%E5%9B%BE%E4%BA%94.png">
+<meta property="article:published_time" content="2022-08-19T14:59:31.000Z">
+<meta property="article:modified_time" content="2022-08-25T15:34:01.867Z">
+<meta property="article:author" content="薛定谔的猫">
+<meta property="article:tag" content="dl">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2022/08/19/DBNet/图一.png">
+  
+  
+  
+  <title>DBNet - 浮生小记</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.2","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>浮生小记</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/blackholl.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="DBNet"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-08-19 22:59" pubdate>
+          2022年8月19日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">DBNet</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="DBNet"><a href="#DBNet" class="headerlink" title="DBNet"></a>DBNet</h2><p>DBNet适用于文本字符区域定位的算法，是通过对输入图片的文本前景分割，然后进行后处理得到的文本区域定位框的模型，不同于基于检测的文本字符区域定位那种基于检测算法，基于分割的定位算法在后处理上有更大的难度。</p>
+<p><a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1911.08947.pdf">论文</a><br><a target="_blank" rel="noopener" href="https://github.com/MhLiao/DB">官方代码</a></p>
+<p><img src="/2022/08/19/DBNet/图一.png" srcset="/img/loading.gif" lazyload alt="图一"><br>图一中蓝色线展示的是一般的字符区域定位流程图。<br>首先通过分割网络模型得到概率图，再通过设定的阈值将概率图转换为二值图<br>然后使用一些启发式的规则，如像素聚合等将文本像素聚合到一起。<br>作者提出的操作流程为红色线展示。目的是将二值化操作加入的分割网络中进行联合优化。这样做的一大好处就是对于每一个图片的阈值都能进行自适应的调整。能很好的区分前景像素与背景像素。<br>然而，标准的二值化函数是不可导的函数，因此作者提出DB(differentiable Binarization) 可导二值化函数，可以在训练分割网络的时候进行求导运算。</p>
+<p>论文的主要贡献如下：</p>
+<ol>
+<li>将二值操作融入到网络的训练过程中，实现CNN网络的端到端训练</li>
+<li>提出DB模块，一个更为鲁棒性的速度更快地文件检测器</li>
+<li>DB模块能在推理的时候移出，因此没有额外的内存和时间开销</li>
+</ol>
+<p>DBNet网络结构如下<br><img src="/2022/08/19/DBNet/%E5%9B%BE%E4%BA%8C.png" srcset="/img/loading.gif" lazyload alt="图二"><br>基本流程如下图：</p>
+<ol>
+<li>输入图片经过特征金字塔得到不同尺寸的特征图</li>
+<li>将通过特征金字塔得到的特征图上采样到同样的尺寸特征图F</li>
+<li>然后通过特征图F得概率图P和阈值图T</li>
+<li>然后通过概率图P和特征图F得到近似二值图 B<br>在训练的时候使用概率图P,阈值图T,和近似二值化图B 来进行监督。其中概率图P和近似二值化图B使用相同的监督信息。<br>推理的时候可以从近似二值图或者是概率图中得到文本定位框的结果。</li>
+</ol>
+<p><strong>标准二值化</strong><br>给定分割网络得到的概率图 $P \in R^{h*w}$ 其中H和W分别表示特征图的高和宽，通过下面的公式将概率图P转换成二值图。</p>
+<script type="math/tex; mode=display">B_{i,j} = \begin{cases}
+1 & P_{i,j} < thresh \\
+0 & otherwise \\
+\end{cases}</script><p>其中thresh是认为设定的二值化阈值。</p>
+<p><strong>Differentiable binarization 可导二值化</strong><br>可导二值化得到的近似二值化图B可以通过下面的公式，通过概率图P和阈值图T来了求取。</p>
+<script type="math/tex; mode=display">B_{i,j} = \frac{1}{1+e^{-k(P_{i,j}-T_{i,j})}}</script><p>其中的 k 是设定的缩放因子，设定值为50。在效果上可导二值化与标准二值化相似，但是可导二值化能直接在训练分割网络时对其进行优化。可导二值化的自动阈值可以帮助从背景中区分不同的文本区域。同样也可以用于区分那些相隔近的文本区域。如下图示例的样子。<br><img src="/2022/08/19/DBNet/%E5%9B%BE%E4%B8%89.png" srcset="/img/loading.gif" lazyload alt="图三"></p>
+<p>可导二值化能提升效果可以通过梯度的反向传播来进行解释，下面以二分类交叉熵损失函数为例来说明。<br>定义 $f(x) =\frac{1}{1+e^{-kx}}$ 为可导二值化函数，其中 $x = (P_{i,j}-T_{i,j})$ </p>
+<script type="math/tex; mode=display">l_+ = -log(\frac{1}{1+e^{-kx}})</script><script type="math/tex; mode=display">l_- = -log(1 - \frac{1}{1+e^{-kx}})</script><p>计算 $l_+$ 和 $l_-$ 对x的偏导数</p>
+<script type="math/tex; mode=display">\frac{\partial{l_+}}{\partial{x}} \begin{align}
+&= (1+e^{-kx})\frac{\partial{(1+e^{-kx})}}{\partial{x}} \\
+&= (1+e^{-kx})(k\frac{-e^{-kx}}{(1+e^{-kx})^2}) \\
+&= -kf(x)e^{-kx}
+\end{align}</script><script type="math/tex; mode=display">\frac{\partial(l_-)}{\partial(x)} \begin{align} 
+&= \frac{\partial(-log(\frac{e^{-kx}}{1+e^{-kx}}))}{\partial(x)} \\
+&= \frac{\partial(-log(e^{-kx}))}{\partial(x)} + \frac{\partial(log(1+e^{-kx}))}{\partial(x)} \\
+&= k + \frac{-ke^{-kx}}{1+e^{-kx}} \\
+&= k(1 - \frac{e^{-kx}}{1+e^{-kx}}) \\
+&= kf(x)
+\end{align}</script><p>当k取和k取50时的函数图与导数图如下图：<br><img src="/2022/08/19/DBNet/%E5%9B%BE%E5%9B%9B.png" srcset="/img/loading.gif" lazyload alt="图四"></p>
+<p>训练标签生成<br><img src="/2022/08/19/DBNet/%E5%9B%BE%E4%BA%94.png" srcset="/img/loading.gif" lazyload alt="图五"><br>其中红色的为标注的轮廓，蓝色的线表示向内压缩的边界线，绿色线表示向外膨胀的线。<br>probability map概率图的生成受 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1806.02559.pdf">PSENet</a> 网络的启发。对于给定的一张图片，其中的文本区域可以用一系列的点来表示 $G = \{S_k\}^n_{k=1}$ 其中 n 表示顶点数目，不同的数据集有不同的顶点数。</p>
+<p>使用 vatti clipping algorithm 算法，根据G生成$G_s$，$G_s$表示向内压缩的边界线，偏移量D的计算方式是</p>
+<script type="math/tex; mode=display">D = \frac{A(1-r^2)}{L}</script><p>论文中参数r设置为0.4，L表示标注的边长，A 表示多边形面积。<br>使用同样的方法生成$G_d$，$G_d$表示向外膨胀的线，将$G_s$ $G_d$之间的部分视为文本框的边界，阈值图的标注可以通过计算与真实的 $G$ 之间的距离得到。</p>
+<p>DBNet 的损失函数由三个部分组成，总体表达式如下：</p>
+<script type="math/tex; mode=display">L = L_s + \alpha L_b + \beta L_t</script><p>其中 $L_s$ 是概率图损失， $L_b$ 是近似二值图损失，$L_t$ 表示阈值图损失，论文中设置 $\alpha = 0.1$ $\beta = 10$。<br>对于 $L_b$ 和 $L_s$ 都采用BCE损失函数，其公式如下</p>
+<script type="math/tex; mode=display">L_s = L_b = \sum_{i\in S_t}((y_i)log(x_i)+(1-y_i)log(1-y_i))</script><p>$S_t$ 是一个子集，其中正样本与负样本的比值为 1：3。<br>对于 $L_t$ 选择计算$G_d$与真实标签之间的 L1 距离。</p>
+<script type="math/tex; mode=display">L_t = \sum_{i\in R_d}(\left| y_i - x_i \right|
+)</script><p>$y_i$ 是概率图中的标签值，$x_i$ 是 $G_d$ 图上对应的值。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/dl/">#dl</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/08/25/spdlog%E4%BD%BF%E7%94%A8/" title="spdlog使用">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">spdlog使用</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/08/12/CMake%E4%B8%8EMakefile/" title="CMake与Makefile">
+                        <span class="hidden-mobile">CMake与Makefile</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      headingSelector : CONFIG.toc.headingSelector || 'h1,h2,h3,h4,h5,h6',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      collapseDepth   : CONFIG.toc.collapseDepth || 0,
+      scrollSmooth    : true,
+      headingsOffset  : -boardTop
+    });
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.10/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.1/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
